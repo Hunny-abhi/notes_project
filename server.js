@@ -2,8 +2,10 @@ const express = require("express");
 require("dotenv").config();
 const connectDB = require("./db/mongo_db");
 const Note = require("./model/notes");
+const cors = require("cors");
 
 const app = express();
+app.use(cors());
 app.use(express.json());
 
 app.get("/", (req, res) => {
@@ -41,6 +43,26 @@ app.delete("/notes/delete:id", async (req, res) => {
     res.status(500).send("Server error");
   }
 });
+
+app.patch("/notes/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const updatedNote = await Note.findByIdAndUpdate(id, req.body, {
+      new: true,
+      runValidators: true,
+    });
+
+    if (!updatedNote) {
+      return res.status(404).send("Note not updated!!");
+    }
+
+    res.status(200).json(updatedNote);
+  } catch (err) {
+    console.error("Error updating note:", err);
+    res.status(500).send("Server error");
+  }
+});
+
 app.get("/notes", async (req, res) => {
   try {
     const notes = await Note.find().sort({ createdAt: -1 });
